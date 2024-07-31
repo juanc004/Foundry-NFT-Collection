@@ -1,40 +1,47 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity 0.8.20;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MoodNft is ERC721 {
+    error ERC721Metadata__URI_QueryFor_NonExistentToken();
     error MoodNft__CantFlipMoodIfNotOwner();
-
-    uint256 private s_tokenCounter;
-    string private s_sadSvgImageUri;
-    string private s_happySvgImageUri;
 
     enum NFTState {
         HAPPY,
         SAD
     }
 
+    uint256 private s_tokenCounter;
+    string private s_sadSvgUri;
+    string private s_happySvgUri;
+
     mapping(uint256 => NFTState) private s_tokenIdToState;
 
+    event CreatedNFT(uint256 indexed tokenId);
+
     constructor(
-        string memory sadSvgImageUri,
-        string memory happySvgImageUri
-    ) ERC721("Mood Nft", "MN") {
+        string memory sadSvgUri,
+        string memory happySvgUri
+    ) ERC721("Mood Nft", "MN") Ownable(msg.sender) {
         s_tokenCounter = 0;
-        s_sadSvgImageUri = sadSvgImageUri;
-        s_happySvgImageUri = happySvgImageUri;
+        s_sadSvgUri = sadSvgUri;
+        s_happySvgUri = happySvgUri;
     }
 
     function mintNft() public {
+        // how would you require payment for this NFT?
+        uint256 tokenCounter = s_tokenCounter;
         _safeMint(msg.sender, s_tokenCounter);
-        s_tokenIdToState[s_tokenCounter] = NFTState.HAPPY;
-        s_tokenCounter++;
+        s_tokenCounter = s_tokenCounter + 1;
+        emit CreatedNFT(tokenCounter);
     }
 
     function flipMood(uint256 tokenId) public {
         if (
+            // where is getApproved(), and ownerOf() defined?
             getApproved(tokenId) != msg.sender && ownerOf(tokenId) != msg.sender
         ) {
             revert MoodNft__CantFlipMoodIfNotOwner();
@@ -47,6 +54,7 @@ contract MoodNft is ERC721 {
         }
     }
 
+    // where is this function defined in Base64.sol?
     function _baseURI() internal pure override returns (string memory) {
         return "data:application/json;base64,";
     }
@@ -54,11 +62,13 @@ contract MoodNft is ERC721 {
     function tokenURI(
         uint256 tokenId
     ) public view virtual override returns (string memory) {
-        string memory imageURI;
-        if (s_tokenIdToState[tokenId] == NFTState.HAPPY) {
-            imageURI = s_happySvgImageUri;
-        } else {
-            imageURI = s_sadSvgImageUri;
+        if (ownerOf(tokenId) == address(0)) {
+            revert ERC721Metadata__URI_QueryFor_NonExistentToken();
+        }
+        string memory imageURI = s_happySvgUri;
+
+        if (s_tokenIdToState[tokenId] == NFTState.SAD) {
+            imageURI = s_sadSvgUri;
         }
 
         return
@@ -79,5 +89,17 @@ contract MoodNft is ERC721 {
                     )
                 )
             );
+    }
+
+    function getHappySVG() public view reutrns (string memory) {
+        return s_happySvgUri;
+    }
+
+    function getSadSVG() public view reutrns (string memory) {
+        return s_sadSvgUri;
+    }
+
+    function getTokenCounter() public view returns (uint256) {
+        return s_tokenCounter;
     }
 }
