@@ -5,7 +5,7 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MoodNft is ERC721 {
+contract MoodNft is ERC721, Ownable {
     error ERC721Metadata__URI_QueryFor_NonExistentToken();
     error MoodNft__CantFlipMoodIfNotOwner();
 
@@ -25,7 +25,7 @@ contract MoodNft is ERC721 {
     constructor(
         string memory sadSvgUri,
         string memory happySvgUri
-    ) ERC721("Mood Nft", "MN") Ownable(msg.sender) {
+    ) ERC721("Mood Nft", "MN") Ownable (msg.sender) {
         s_tokenCounter = 0;
         s_sadSvgUri = sadSvgUri;
         s_happySvgUri = happySvgUri;
@@ -91,15 +91,15 @@ contract MoodNft is ERC721 {
             );
     }
 
-    function getHappySVG() public view reutrns (string memory) {
+    function getHappySVG() public view returns (string memory) {
         return s_happySvgUri;
     }
 
-    function getSadSVG() public view reutrns (string memory) {
+    function getSadSVG() public view returns (string memory) {
         return s_sadSvgUri;
     }
 
     function getTokenCounter() public view returns (uint256) {
         return s_tokenCounter;
     }
-}
+} 
